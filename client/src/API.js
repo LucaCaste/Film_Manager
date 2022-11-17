@@ -2,7 +2,6 @@ const dayjs = require("dayjs");
 const URL = 'http://localhost:3001/api'
 
 
-
 async function getAllFilms(user) {
   const response = await fetch(URL + '/films', { credentials: 'include'});
   const filmsJson = await response.json();
