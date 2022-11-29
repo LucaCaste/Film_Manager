@@ -1,0 +1,68 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "title": "Film_schema",
+    "description": "A Json schema for the film in the film library",
+    "type": "object",
+    "properties": {
+        "id":{
+            "description": "The id of the film",
+            "type":"integer"
+        },
+        "title":{
+            "description": "The title of the film",
+            "type":"string"
+        },
+        "owner":{
+            "description": "The id of the owner in the library of the film",
+            "type":"integer"
+        },
+        "private":{
+            "description": "A boolean field that indicate if other users can see the film in the library",
+            "type":"boolean",
+            "default":true
+        },
+        "watchDate":{
+            "description": "The date when whatched the film",
+            "type":"string",
+            "format": "date"
+        },
+        "rating":{
+            "description": "the vote of the film",
+            "type":"integer",
+            "minimum":1,
+            "maximum": 10
+        },
+        "favorite":{
+            "description": "A boolean filed that indicate if the film is fav or not",
+            "type":"boolean",
+            "default":false
+        }
+    },
+    "required": ["id","title","owner","private"],
+    "dependencies": {
+        "watchDate":{
+            "required": ["private"],
+            "properties": {
+                "private" : {
+                    "const":true
+                }
+            }
+        },
+        "rating": {
+            "required": ["private"],
+            "properties": {
+                "private":{
+                    "const":true
+                }
+            }
+        },
+        "favorite": {
+            "required": ["private"],
+            "properties": {
+                "private":{
+                    "const":true
+                }
+            }
+        }
+    }
+}

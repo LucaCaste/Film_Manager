@@ -1,0 +1,10 @@
+{
+    "$schema":"../film_schema.json",
+    "id":1,
+    "title":"Matrix",
+    "owner":42,
+    "private": true,
+    "watchDate": "2021-05-22",
+    "rating":9,
+    "favorite":true
+}

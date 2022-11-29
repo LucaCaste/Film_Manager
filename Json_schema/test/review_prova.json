@@ -1,0 +1,9 @@
+{
+    "$schema":"../review_schema.json",
+    "filmId": 1,
+    "reviewId": 1,
+    "completed":true,
+    "rating": 5,
+    "review": "Molto bello",
+    "reviewDate": "2022-11-29"
+}

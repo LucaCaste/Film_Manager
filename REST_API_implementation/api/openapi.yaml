@@ -1,0 +1,995 @@
+openapi: 3.0.1
+info:
+  title: Film Manager
+  description: REST API for the film Manager
+  version: 1.0.0
+servers:
+- url: https://todo.swagger.io/v2
+- url: http://todo.swagger.io/v2
+tags:
+- name: films
+  description: the set of all films
+- name: films/private
+  description: the set of all the films of a logged in user
+- name: "films/private/{filmId}"
+  description: one specific film of the list
+- name: films/public
+  description: the set of all the public films
+- name: films/public/invited
+  description: the set of public film that the user is invited to review
+- name: "films/public/{filmId}/reviews"
+  description: The reviews of a public film
+- name: "films/public/{filmId}/reviews/{reviewId}"
+  description: A specific review of a public film
+- name: films/public/assignment
+  description: the assignment of the review to the users
+- name: users
+  description: the set of all the users
+- name: users/authenticator
+  description: the authenticator
+- name: "users/{userId}"
+  description: a specific user
+paths:
+  /api/users/authenticator:
+    post:
+      tags:
+      - users/authenticator
+      summary: Log the user in or out
+      description: The user send username and password to log in
+      operationId: AuthenticateUser
+      parameters:
+      - name: type
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          description: type of operation if login or logout
+      requestBody:
+        description: The data sent to perform the login
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user'
+        required: true
+      responses:
+        "204":
+          description: No content
+          headers:
+            Set-Cockie:
+              style: simple
+              explode: false
+              schema:
+                type: string
+                example: token=abcde12345; Path=/ ; HTTPOnly
+        "400":
+          description: Bad Request
+          content: {}
+        "401":
+          description: Unauthorized
+          content: {}
+      x-swagger-router-controller: Usersauthenticator
+  /api/users:
+    get:
+      tags:
+      - users
+      description: Get info about users
+      operationId: getUsers
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/user'
+                x-content-type: application/json
+        "401":
+          description: Unauthorized
+          content: {}
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Users
+  /api/users/{userId}:
+    get:
+      tags:
+      - "users/{userId}"
+      description: Get info about user
+      operationId: getSingleUser
+      parameters:
+      - name: userId
+        in: path
+        description: the ID of the user
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+        "401":
+          description: Unauthorized
+          content: {}
+        "404":
+          description: Not found
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: UsersuserId
+  /api/films:
+    post:
+      tags:
+      - films
+      description: Insert a new film
+      operationId: createFilm
+      requestBody:
+        description: Rappresentation of the film
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/film'
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/film'
+        "400":
+          description: Bad request
+          content: {}
+        "401":
+          description: Unauthorized
+          content: {}
+        "500":
+          description: Internal server error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Films
+  /api/films/private:
+    get:
+      tags:
+      - films/private
+      description: Get a list of the film of a user logged in
+      operationId: getPrivateFilms
+      parameters:
+      - name: pageNo
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          description: The id of the reqested page
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: Unauthorized
+          content: {}
+        "500":
+          description: Internal server error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Filmsprivate
+  /api/films/private/{filmId}:
+    get:
+      tags:
+      - "films/private/{filmId}"
+      summary: Retrieve a private film
+      description: The private film with ID filmId is retrieved. This operation can
+        be performed on the film if the user who performs the operation is the film's
+        owner.
+      operationId: getSinglePrivateFilm
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film to retrieve
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/film'
+        "401":
+          description: Unauthorized
+          content: {}
+        "403":
+          description: Forbidden
+          content: {}
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: FilmsprivatefilmId
+    put:
+      tags:
+      - "films/private/{filmId}"
+      summary: Update a private film
+      description: The private film with ID filmId is updated. This operation does
+        not allow changing its visibility. This operation can be performed only by
+        the owner.
+      operationId: updateSinglePrivateFilm
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film to update
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: The updated film object that needs to replace the old object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/film'
+        required: true
+      responses:
+        "204":
+          description: No Content
+          content: {}
+        "400":
+          description: Bad Request
+          content: {}
+        "401":
+          description: Unauthorized
+          content: {}
+        "403":
+          description: Forbidden
+          content: {}
+        "404":
+          description: Not Found
+          content: {}
+        "409":
+          description: "Conflict (attempt to make unallowed change, e.g., visibility)"
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: FilmsprivatefilmId
+    delete:
+      tags:
+      - "films/private/{filmId}"
+      summary: Delete a private film
+      description: The private film with ID filmId is deleted. This operation can
+        only be performed by the owner.
+      operationId: deleteSinglePrivateFilm
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film to delete
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: Successful operation - No Content
+          content: {}
+        "401":
+          description: Unauthorized
+          content: {}
+        "403":
+          description: Forbidden
+          content: {}
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: FilmsprivatefilmId
+  /api/films/public:
+    get:
+      tags:
+      - films/public
+      summary: Retrieve the public films
+      description: "The public films (i.e., the films that are visible for all the\
+        \ users of the service) are retrieved. This operation does not require authentication.\
+        \ A pagination mechanism is implemented to limit the size of messages."
+      operationId: getPublicFilms
+      parameters:
+      - name: pageNo
+        in: query
+        description: "The id of the requested page (if absent, the first page is returned)"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "500":
+          description: Internal Server Error
+          content: {}
+      x-swagger-router-controller: Filmspublic
+  /api/films/public/invited:
+    get:
+      tags:
+      - films/public/invited
+      summary: Retrieve the public films that the logged-in user has been invited
+        to review
+      description: The public films that the logged-in user has been invited to review
+        are retrieved. A pagination mechanism is implemented to limit the size of
+        messages.
+      operationId: getInvitedFilms
+      parameters:
+      - name: pageNo
+        in: query
+        description: "The id of the requested page (if absent, the first page is returned)"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: Unauthorized
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Filmspublicinvited
+  /api/films/public/{filmId}:
+    get:
+      tags:
+      - "films/public/{filmId}"
+      summary: Retrieve a public film
+      description: The public film with ID filmId is retrieved. This operation does
+        not require authentication.
+      operationId: getSinglePublicFilm
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film to retrieve
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/film'
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      x-swagger-router-controller: FilmspublicfilmId
+    put:
+      tags:
+      - "films/public/{filmId}"
+      summary: Update a public film
+      description: The public film with ID filmId is updated. This operation does
+        not allow changing its visibility. This operation can be performed only by
+        the owner.
+      operationId: updateSinglePublicFilm
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film to update
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: The updated film object that needs to replace the old object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/film'
+        required: true
+      responses:
+        "204":
+          description: No Content
+          content: {}
+        "400":
+          description: Bad Request
+          content: {}
+        "401":
+          description: Unauthorized
+          content: {}
+        "403":
+          description: Forbidden
+          content: {}
+        "404":
+          description: Not Found
+          content: {}
+        "409":
+          description: "Conflict (attempt to make unallowed change, e.g., visibility)"
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: FilmspublicfilmId
+    delete:
+      tags:
+      - "films/public/{filmId}"
+      summary: Delete a public film
+      description: The public film with ID filmId is deleted. This operation can only
+        be performed by the owner.
+      operationId: deleteSinglePublicFilm
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film to delete
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: Successful operation - No Content
+          content: {}
+        "401":
+          description: Unauthorized
+          content: {}
+        "403":
+          description: Forbidden
+          content: {}
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: FilmspublicfilmId
+  /api/films/public/{filmId}/reviews:
+    get:
+      tags:
+      - "films/public/{filmId}/reviews"
+      summary: Retrieve the list of all the reviews that have been issued/completed
+        for a film
+      description: 'All the reviews that have been issued/completed for the film with
+        ID filmId are retrieved. A pagination mechanism is implemented to limit the
+        size of messages. This operation does not require authentication. '
+      operationId: getFilmReviews
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film whose reviews must be retrieved
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: pageNo
+        in: query
+        description: "ID of the requested page (if absent, the first page is returned)'"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/inline_response_200_1'
+                x-content-type: application/json
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      x-swagger-router-controller: FilmspublicfilmIdreviews
+    post:
+      tags:
+      - "films/public/{filmId}/reviews"
+      summary: Issue film reviewr to some users
+      description: The film with ID filmId is assigned to one or more users for review
+        and the corresponding reviews are created. The users are specified in the
+        review representations in the request body. This operation can only be performed
+        by the owner.
+      operationId: issueFilmReview
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: "the new film reviews, including the users to whom they are issued"
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/review'
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/review'
+                x-content-type: application/json
+        "400":
+          description: Bad Request
+          content: {}
+        "401":
+          description: Unauthorized
+          content: {}
+        "403":
+          description: Forbidden
+          content: {}
+        "404":
+          description: Not Found
+          content: {}
+        "409":
+          description: "Conflict (e.g., wrong film id or unknown reviewer id)"
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: FilmspublicfilmIdreviews
+  /api/films/public/{filmId}/reviews/{reviewerId}:
+    get:
+      tags:
+      - "films/public/{filmId}/reviews/{reviewerId}"
+      summary: Retrieve a review that has been issued/completed for a film
+      description: 'The review of the film with ID filmID issued to the user with
+        ID reviewerId is retrieved. This operation does not require authentication. '
+      operationId: getSingleReview
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film whose reviews must be retrieved
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: reviewerId
+        in: path
+        description: ID of the user to whom the review has been issued
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/review'
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      x-swagger-router-controller: FilmspublicfilmIdreviewsreviewerId
+    put:
+      tags:
+      - "films/public/{filmId}/reviews/{reviewerId}"
+      summary: Complete a review
+      description: "The review of the film with ID filmId and issued to the user with\
+        \ ID reviewerId is completed. This operation only allows setting the \"completed\"\
+        \ property to the \"true\" value, and changing the values of the \"reviewDate\"\
+        , \"rating\", and \"review\" properties. This operation can be performed only\
+        \ by the invited reviewer."
+      operationId: updateSingleReview
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film whose review must be completed
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: reviewerId
+        in: path
+        description: ID of the user to whom the review has been issued
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        description: The properties of the Review object that must be updated
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/reviews_reviewerId_body'
+      responses:
+        "204":
+          description: No Content
+          content: {}
+        "400":
+          description: Bad Request
+          content: {}
+        "401":
+          description: Unauthorized
+          content: {}
+        "403":
+          description: Forbidden
+          content: {}
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: FilmspublicfilmIdreviewsreviewerId
+    delete:
+      tags:
+      - "films/public/{filmId}/reviews/{reviewerId}"
+      summary: Delete a review invitation
+      description: "The review of the film with ID filmId and issued to the user with\
+        \ ID reviewerId is deleted. This operation can only be performed by the owner,\
+        \ and only if the review has not yet been completed by the reviewer."
+      operationId: deleteSingleReview
+      parameters:
+      - name: filmId
+        in: path
+        description: ID of the film whose review invitation must be deleted
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      - name: reviewerId
+        in: path
+        description: ID of the user to whom the review has been issued
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "204":
+          description: Successful operation - No Content
+          content: {}
+        "401":
+          description: Unauthorized
+          content: {}
+        "403":
+          description: Forbidden
+          content: {}
+        "404":
+          description: Not Found
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: FilmspublicfilmIdreviewsreviewerId
+  /api/films/public/assignments:
+    post:
+      tags:
+      - films/public/assignments
+      summary: Assign automatically review invitations for the unassigned public films
+        owned by the authenticated user in a balanced manner
+      description: "The films owned by the authenticated user who performed the request\
+        \ and that are not assigned to any user for review, are automatically assigned\
+        \ to the users of the service in a balanced manner. Only authenticated users\
+        \ can make this request."
+      operationId: assignReviewBalanced
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/inline_response_200_2'
+                x-content-type: application/json
+        "401":
+          description: Unauthorized
+          content: {}
+        "500":
+          description: Internal Server Error
+          content: {}
+      security:
+      - cookieAuth: []
+      x-swagger-router-controller: Filmspublicassignments
+components:
+  schemas:
+    film:
+      required:
+      - id
+      - owner
+      - private
+      - title
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The id of the film
+        title:
+          type: string
+          description: The title of the film
+        owner:
+          type: integer
+          description: The id of the owner in the library of the film
+        private:
+          type: boolean
+          description: A boolean field that indicate if other users can see the film
+            in the library
+          default: true
+        watchDate:
+          type: string
+          description: The date when whatched the film
+          format: date
+        rating:
+          maximum: 10
+          minimum: 1
+          type: integer
+          description: the vote of the film
+        favorite:
+          type: boolean
+          description: A boolean filed that indicate if the film is fav or not
+          default: false
+      description: A Json schema for the film in the film library
+      example:
+        owner: 6
+        private: true
+        watchDate: 2000-01-23
+        rating: 2
+        id: 0
+        title: title
+        favorite: false
+    review:
+      required:
+      - completed
+      - filmId
+      - reviewId
+      type: object
+      properties:
+        filmId:
+          type: integer
+          description: The id of the film
+        reviewId:
+          type: integer
+          description: The id of the review
+        completed:
+          type: boolean
+          description: A boolean field that mark if the review is complete
+          default: false
+        reviewDate:
+          type: string
+          description: The date when the review as been completed
+          format: date
+        rating:
+          maximum: 10
+          minimum: 1
+          type: integer
+          description: The rating of the review
+        review:
+          maxLength: 1000
+          type: string
+          description: The textual review
+      description: A Json schema for the film review
+      example:
+        reviewDate: 2000-01-23
+        review: review
+        filmId: 5
+        rating: 3
+        completed: false
+        reviewId: 5
+    user:
+      required:
+      - email
+      - id
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The id of the user
+        name:
+          type: string
+          description: The username of the user
+        email:
+          type: string
+          description: the email of the user
+          format: email
+        password:
+          maxLength: 20
+          minLength: 6
+          type: string
+          description: the password of the user
+      description: A Json schema for the user
+      example:
+        password: password
+        name: name
+        id: 0
+        email: ""
+    inline_response_200:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+        currentPage:
+          type: integer
+        totalItems:
+          type: integer
+        films:
+          type: array
+          items:
+            $ref: '#/components/schemas/film'
+        next:
+          type: string
+          format: uri
+      example:
+        next: http://example.com/aeiou
+        films:
+        - owner: 6
+          private: true
+          watchDate: 2000-01-23
+          rating: 2
+          id: 0
+          title: title
+          favorite: false
+        - owner: 6
+          private: true
+          watchDate: 2000-01-23
+          rating: 2
+          id: 0
+          title: title
+          favorite: false
+        totalItems: 1
+        totalPages: 0
+        currentPage: 6
+    inline_response_200_1:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+        currentPage:
+          type: integer
+        totalItems:
+          type: integer
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/review'
+        next:
+          type: string
+          format: uri
+      example:
+        next: http://example.com/aeiou
+        totalItems: 1
+        reviews:
+        - reviewDate: 2000-01-23
+          review: review
+          filmId: 5
+          rating: 3
+          completed: false
+          reviewId: 5
+        - reviewDate: 2000-01-23
+          review: review
+          filmId: 5
+          rating: 3
+          completed: false
+          reviewId: 5
+        totalPages: 0
+        currentPage: 6
+    reviews_reviewerId_body:
+      type: object
+      properties:
+        completed:
+          type: boolean
+          default: true
+        reviewDate:
+          type: string
+          description: the date when the review has been completed by the invited
+            user
+          format: date
+        rating:
+          maximum: 10
+          minimum: 1
+          type: integer
+          description: the rating the reviewer has given to the film
+        review:
+          maxLength: 1000
+          type: string
+          description: a textual description of the review
+      additionalProperties: false
+    inline_response_200_2:
+      properties:
+        filmId:
+          type: integer
+        reviewerId:
+          type: integer
+      example:
+        reviewerId: 6
+        filmId: 0
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      name: JSESSIONID
+      in: cookie
